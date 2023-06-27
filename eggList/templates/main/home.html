@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+        <h1 class="mb-4">Home</h1>
+        {% for semana,listas in listas_por_semana %}
+            <div class="margin-bottom mb-2">
+                <h2>Semana del <span class="text-primary">{{semana.strftime('%Y-%m-%d')}}</span></h2>
+                <ul>
+                    {% for lista in listas %}
+                        <li>
+                           <a href = "{{url_for('listas.lista',lista_id = lista.id)}}">{{lista.descripcion}}</a>-- {{lista.fecha_creacion.strftime('%Y-%m-%d')}}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+    {% endfor %}
+{% endblock content %}

@@ -1,0 +1,140 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="d-flex flex-row justify-content-between align-items-center  mb-5 border-bottom">
+  <h1>Lista del <span class="text-primary">{{lista.fecha_creacion.strftime('%Y-%m-%d')}}</span></h1>
+  <a href="{{ url_for('listas.agregar_producto', lista_id = lista.id) }}" class="btn  btn-primary ">Agregar</a>
+</div>
+<h4 class="mb-2">Productos fuera del carrito</h4>
+<table class="table mb-5">
+  <thead>
+    <tr>
+      <th scope="col">Delete</th>
+      <th scope="col">Producto</th>
+      <th scope="col">Cantidad</th>
+      <th scope="col">Precio por unidad</th>
+      <th scope="col">Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for producto in productos_fuera_de_carrito %}
+        <tr >
+          <th scope="row">
+
+              <button type="button"  data-bs-toggle="modal" data-bs-target="#borrarProducto{{producto.id}}">❌</button>
+
+          </th>
+          <td>{{producto.descripcion}}</td>
+          <td>{{producto.cantidad}}</td>
+          <td>
+            {% if producto.precio %}
+              ${{producto.precio}}
+            {% endif %}
+          </td>
+          <td class="p-2">
+            <a class="btn mb-2 btn-outline-info" href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝</a>
+
+              <button type="button" class="btn mb-2 btn-outline-primary" data-bs-toggle="modal" data-bs-target="#productoComprado{{producto.id}}">
+                Agregar a carrito🛒
+              </button>
+
+
+          </td>
+        </tr>
+
+        <div class="modal fade" id="borrarProducto{{producto.id}}" tabindex="-1" aria-labelledby="borrarProducto{{producto.id}}Label" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title fs-5" id="borrarProducto{{producto.id}}Label">Desea borrar el producto "{{producto.descripcion}}?"</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{url_for('productos.borrar_producto', producto_id = producto.id)}}">
+                  <input type="submit" class="btn btn-outline-danger" value="Borrar"></input>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal fade" id="productoComprado{{producto.id}}" tabindex="-1" aria-labelledby="productoComprado{{producto.id}}Label" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-4" id="productoComprado{{producto.id}}Label">
+                  Agregue {{producto.descripcion}} a su carrito
+                </h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form method = "POST" action = "{{url_for('productos.confirmar_carrito', producto_id = producto.id)}}">
+
+                  {{form_carrito.hidden_tag()}}
+                  <div class="mb-3">
+                    {{form_carrito.precio.label(class="form-label")}}
+                    {{form_carrito.precio(class="form-control", value = producto.precio if producto.precio else 0)}}
+                    {% if not producto.precio %}
+                      <div id="precioHelp" class="form-text">Ignorar si no sabes el precio</div>
+                    {% endif %}
+
+                  </div>
+                  <div class="d-flex flex-row justify-content-between align-items-center">
+                    {{form_carrito.submit(class="btn btn-outline-info")}}
+                  </div>
+                </form>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+  {% endfor %}
+  </tbody>
+</table>
+
+<h4 class="mb-2">Productos en carrito</h4>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Delete</th>
+      <th scope="col">Producto</th>
+      <th scope="col">Cantidad</th>
+      <th scope="col">Precio por unidad</th>
+      <th scope="col">Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for producto in productos_en_carrito %}
+          <tr >
+            <th scope="row">
+                <a class="btn btn-outline-danger btn-sm" href="{{url_for('productos.sacar_de_carrito', producto_id = producto.id)}}">Sacar del carrito🛒</a>
+            </th>
+            <td>{{producto.descripcion}}(🛒)</td>
+            <td>{{producto.cantidad}}</td>
+            <td>
+              {% if producto.precio %}
+                ${{producto.precio}}
+              {% endif %}
+            </td>
+            <td class="p-2">
+              <a class="btn mb-2 btn-outline-info" href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝</a>
+
+
+            </td>
+          </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+
+
+<p class="fs-6">Total gastado en carrito: {{total}}</p>
+
+
+
+{% endblock content %}
+
