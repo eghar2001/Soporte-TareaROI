@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+{% block content %}
+        {% if listas_por_semana %}
+            <h1 class="mb-4">Mis listas</h1>
+            {% for semana,listas in listas_por_semana %}
+                <div class="margin-bottom mb-2">
+                    <h2>Semana del <span class="text-primary">{{semana.strftime('%Y-%m-%d')}}</span></h2>
+                    <ul>
+
+                    </ul>
+                    <div class="card" style=>
+                      <ul class="list-group list-group-flush">
+                        {% for lista in listas %}
+                            <li class="list-group-item">
+                               <a href = "{{url_for('listas.lista',lista_id = lista.id)}}">{{lista.descripcion}}</a><br>
+                                Fecha de creacion: <span class="text-secondary">{{lista.fecha_creacion.strftime('%Y-%m-%d')}}</span>
+                            </li>
+                        {% endfor %}
+                      </ul>
+                    </div>
+                </div>
+
+        {% endfor %}
+    {% else %}
+        <a href="{{url_for('listas.crear_lista')}}">Crear mi primer lista</a>
+    {% endif %}
+{% endblock content %}

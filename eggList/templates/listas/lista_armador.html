@@ -1,0 +1,65 @@
+{% extends 'listas/lista_layout.html' %}
+
+{% block productos %}
+
+<h4 class="mb-2">Productos Agregados</h4>
+<table class="table mb-5">
+  <thead>
+    <tr>
+      <th scope="col">Delete</th>
+      <th scope="col">Producto</th>
+      <th scope="col">Cantidad</th>
+      <th scope="col">Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for producto in lista.productos %}
+        <tr >
+          <th scope="row">
+
+              <button type="button"  data-bs-toggle="modal" data-bs-target="#borrarProducto{{producto.id}}">❌</button>
+
+          </th>
+          <td>{{producto.descripcion}}</td>
+          <td>{{producto.cantidad}}</td>
+          <td class="p-2">
+            <a class="btn mb-2 btn-outline-info" href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝</a>
+
+
+
+          </td>
+        </tr>
+
+        <div class="modal fade" id="borrarProducto{{producto.id}}" tabindex="-1" aria-labelledby="borrarProducto{{producto.id}}Label" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3 class="modal-title fs-5" id="borrarProducto{{producto.id}}Label">Desea borrar el producto "{{producto.descripcion}}?"</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{url_for('productos.borrar_producto', producto_id = producto.id)}}">
+                  <input type="submit" class="btn btn-outline-danger" value="Borrar"></input>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+  {% endfor %}
+  </tbody>
+</table>
+
+
+<a href="{{url_for('listas.comprar_lista', lista_id = lista.id)}}" class="btn btn-outline-info">
+Voy a comprar
+</a>
+
+
+{% endblock productos %}
+

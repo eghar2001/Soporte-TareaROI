@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+{% block content %}
+    {% if current_user.grupo_familiar %}
+        <h1 class="mb-4">Grupo Familiar</h1>
+        <div class="border rounded p-3 mb-3">
+            <h5 class="pb-2 border-bottom">Nombre del grupo: <span class="text-primary">{{current_user.grupo_familiar.nombre_familia}}</span></h5>
+            <h5>Integrantes:</h5>
+            <ul>
+                {% for integrante in current_user.grupo_familiar.integrantes %}
+                    <li>{{integrante.nombre}} {{integrante.apellido}} ({{integrante.email}})</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="border rounded p-3">
+            <form method="POST" action="{{url_for('grupos_familiares.agregar_usuario')}}">
+                  {{ form.hidden_tag() }}
+                  <legend>Agregar integrante</legend>
+                  <div class="mb-3">
+                    {{ form.email_usuario.label(class="form-label")}}
+                    {% if form.email_usuario.errors %}
+                        {{ form.email_usuario(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.email_usuario.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.email_usuario(class="form-control form-control-lg") }}
+                    {% endif %}
+                  </div>
+                    {{form.submit(class="btn btn-primary")}}
+            </form>
+        </div>
+
+    {% else %}
+      <div class="alert alert-primary" role="alert">
+        <p><strong>Vemos que no tenes ningun grupo familiar</strong></p>
+        <p>Tenes 2 formas acceder a uno</p>
+        <ul>
+          <li><a href="{{url_for('grupos_familiares.crear_grupo_familiar')}}">Crear un grupo familiar</a></li>
+          <li>Que alguien me invite a su grupo familiar</li>
+        </ul>
+      </div>
+
+    {% endif %}
+
+{% endblock content %}

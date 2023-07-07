@@ -1,10 +1,7 @@
-{% extends 'layout.html' %}
+{% extends 'listas/lista_layout.html' %}
 
-{% block content %}
-<div class="d-flex flex-row justify-content-between align-items-center  mb-5 border-bottom">
-  <h1>Lista del <span class="text-primary">{{lista.fecha_creacion.strftime('%Y-%m-%d')}}</span></h1>
-  <a href="{{ url_for('listas.agregar_producto', lista_id = lista.id) }}" class="btn  btn-primary ">Agregar</a>
-</div>
+{% block productos %}
+
 <h4 class="mb-2">Productos fuera del carrito</h4>
 <table class="table mb-5">
   <thead>
@@ -136,5 +133,5 @@
 
 
 
-{% endblock content %}
+{% endblock productos %}
 
