@@ -20,6 +20,7 @@ class Producto(db.Model):
     cantidad = db.Column(db.Integer(), nullable=False, default=1)
     esta_en_carrito = db.Column(db.Boolean(), default=False)
     id_lista = db.Column(db.Integer(), db.ForeignKey('listas.id'))
+    id_compra = db.Column(db.Integer, db.ForeignKey('compras.id'))
 
 
     def get_total(self):
@@ -27,6 +28,14 @@ class Producto(db.Model):
             return self.precio * self.cantidad
         return self.cantidad
 
+
+class Compra(db.Model):
+    __tablename__="compras"
+
+    id = db.Column(db.Integer(), primary_key = True, autoincrement = True)
+    fecha_compra = db.Column(db.DateTime(), nullable = False, default = datetime.utcnow())
+    productos = db.relationship("Producto")
+    id_comprador = db.Column(db.Integer(), db.ForeignKey("usuarios.id"))
 
 class ListaProductos(db.Model):
     """
@@ -180,3 +189,5 @@ usuarios_roles = db.Table('usuarios_roles',
                           db.Column('usuario_id', db.Integer(), db.ForeignKey('usuarios.id')),
                           db.Column('role_id', db.Integer(), db.ForeignKey('roles.id'))
                           )
+
+

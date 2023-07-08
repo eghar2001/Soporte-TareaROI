@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
-
+from eggList import db
 from eggList.listas.forms import CrearListaForm
-from eggList.models import ListaProductos, Producto, Usuario, RolLista
+from eggList.models import ListaProductos, Producto, Usuario, RolLista, Compra
 from eggList.productos.forms import AgregarProductoForm, CarritoForm
 from eggList.utils import send_email
 from eggList.usuarios.logic import user_roles_required
@@ -67,13 +67,13 @@ def crear_lista():
 @user_roles_required("Usuario")
 def lista(lista_id):
     lista = ListaProductos.query.get_or_404(lista_id)
-    rol_lista = lista_logic.buscar_rol(lista,current_user)
     if current_user in lista.usuarios:
-        if rol_lista.es_rol("Comprador"):
+        if lista_logic.user_has_list_role(lista,current_user,"Comprador"):
             form_carrito = CarritoForm()
+            productos_disponibles = list(filter(lambda producto: not producto.id_compra, lista.productos))
             productos_en_carrito = []
             productos_fuera_de_carrito = []
-            for producto in lista.productos:
+            for producto in productos_disponibles:
                 if producto.esta_en_carrito:
                     productos_en_carrito.append(producto)
                 else:
@@ -84,6 +84,7 @@ def lista(lista_id):
                                    productos_fuera_de_carrito=productos_fuera_de_carrito,
                                    form_carrito=form_carrito, total=total)
         else:
+            lista.productos.sort(key = lambda producto: bool(producto.id_compra))
             return render_template("listas/lista_armador.html",lista = lista)
 
 
@@ -93,10 +94,10 @@ def lista(lista_id):
         abort(403)
 
 
-@listas.route("/lista/<int:lista_id>/comprar_lista")
+@listas.route("/lista/<int:lista_id>/en_supermercado")
 @login_required
 @user_roles_required("Usuario")
-def comprar_lista(lista_id):
+def en_supermercado(lista_id):
     lista = ListaProductos.query.get_or_404(lista_id)
     lista_logic.actualizar_rol(lista, current_user,"Comprador")
     return redirect(url_for("listas.lista",lista_id = lista.id))
@@ -117,3 +118,21 @@ def agregar_producto(lista_id):
         return redirect(url_for('listas.lista', lista_id = lista.id))
 
     return render_template('productos/agregar_producto_form.html', form = form, lista_id = lista.id)
+
+
+@listas.route("/lista/<int:lista_id>/comprar")
+@login_required
+@user_roles_required("Usuario")
+def comprar(lista_id):
+    lista = ListaProductos.query.get_or_404(lista_id)
+    if lista_logic.user_has_list_role(lista,current_user, "Comprador"):
+        productos_comprados = list(filter(lambda producto: producto.esta_en_carrito and not producto.id_compra, lista.productos))
+        if not productos_comprados:
+            flash("No hay productos en tu carrito","primary")
+            return redirect(url_for("listas.lista", lista_id = lista.id))
+        compra = Compra(productos=productos_comprados, id_comprador=current_user.id)
+        db.session.add(compra)
+        db.session.commit()
+        lista_logic.actualizar_rol(lista, current_user, "Armador")
+
+        return redirect(url_for("listas.lista", lista_id = lista.id))

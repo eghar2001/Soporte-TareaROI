@@ -21,7 +21,11 @@
               <button type="button"  data-bs-toggle="modal" data-bs-target="#borrarProducto{{producto.id}}">❌</button>
 
           </th>
-          <td>{{producto.descripcion}}</td>
+          {% if producto.id_compra %}
+            <td><del>{{producto.descripcion}}</del> (<span class="text-danger">COMPRADO</span>)</td>
+          {% else %}
+            <td>{{producto.descripcion}}</td>
+          {% endif %}
           <td>{{producto.cantidad}}</td>
           <td class="p-2">
             <a class="btn mb-2 btn-outline-info" href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝</a>
@@ -56,8 +60,8 @@
 </table>
 
 
-<a href="{{url_for('listas.comprar_lista', lista_id = lista.id)}}" class="btn btn-outline-info">
-Voy a comprar
+<a href="{{url_for('listas.en_supermercado', lista_id = lista.id)}}" class="btn btn-outline-info">
+En supermercado
 </a>
 
 
