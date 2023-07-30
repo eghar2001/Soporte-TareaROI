@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% block content %}
-<form method="POST" action="">
+<form method="POST" action="" enctype="multipart/form-data">
   {{ form.hidden_tag() }}
   <div class="mb-3">
     {{ form.familia.label(class="form-label")}}
@@ -13,6 +13,19 @@
         </div>
     {% else %}
         {{ form.familia(class="form-control form-control-lg") }}
+    {% endif %}
+  </div>
+  <div class="mb-3">
+    {{ form.imagen.label(class="form-label")}}
+    {% if form.imagen.errors %}
+        {{ form.imagen(class="form-control form-control-lg is-invalid") }}
+        <div class="invalid-feedback">
+            {% for error in form.imagen.errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ form.imagen(class="form-control form-control-lg") }}
     {% endif %}
   </div>
 

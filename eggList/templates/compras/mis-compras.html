@@ -1,0 +1,78 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <h1>Mis compras</h1>
+
+  {% if compras.items %}
+    <form method="GET" action="" class="mb-4">
+      <div class="mb-2">
+          {{form.fecha_desde.label(class = "form-control-label")}}
+          {{form.fecha_desde(class = "form-control fecha-desde", id = "fecha_desde")}}
+      </div>
+      <div class="mb-2">
+          {{form.fecha_hasta.label(class = "form-control-label")}}
+          {{form.fecha_hasta(class = "form-control fecha-hasta")}}
+      </div>
+      <div class="mb-2">
+          {{form.supermercado.label(class = "form-control-label")}}
+          {{form.supermercado(class = "form-control fecha-hasta  input-supermercado")}}
+      </div>
+      <div>
+        {{form.submit( class="btn btn-secondary")}}
+        <a class="btn btn-outline-secondary" href="{{url_for('compras.mis_compras')}}">Reset</a>
+      </div>
+    </form>
+    <ul class="d-flex flex-column align-items-start">
+      {% for compra in compras.items %}
+        <a href="{{url_for('compras.compra', compra_id = compra.id)}}" class="non-decorated-link w-75">
+            <li style="list-style:none;" class="mb-3 border-top border-bottom compra" >
+                <div class="d-flex flex-row align-items-center mb-1">
+                    <box-icon color="#5f5f5f" name='calendar'></box-icon>
+                    {{compra.fecha_compra.strftime('%d-%m-%Y')}}
+                </div>
+                <div class="d-flex flex-row align-items-center mb-1">
+                    <box-icon color="#5f5f5f" name="store" ></box-icon>
+                    {{compra.supermercado.nombre}}
+                </div>
+                <div class="d-flex flex-row align-items-center mb-1">
+                    <box-icon color="#5f5f5f" name="location-plus" ></box-icon>
+                    {{compra.supermercado.ciudad.nombre}}, {{compra.supermercado.ciudad.provincia.nombre}}
+                </div>
+                <div class="d-flex flex-row align-items-center mb-1">
+                    <box-icon color="#5f5f5f" name='money'></box-icon>
+                    ${{compra.get_total()}}
+                </div>
+            </li>
+        </a>
+      {% endfor %}
+    </ul>
+  {% elif  form.fecha_desde.data or form.fecha_hasta.data or form.supermercado.data%}
+    <div class="alert alert-primary d-flex align-items-center" role="alert">
+        <box-icon name='calendar-exclamation'></box-icon>
+        <b>No hay compras en esos parametros ingresados</b>
+    </div>
+  {% else %}
+    <div class="alert alert-primary  d-flex align-items-center" role="alert">
+        <box-icon name='bell'></box-icon>
+        <p>No tiene compras</p>
+    </div>
+
+  {% endif %}
+  {% for page_num in compras.iter_pages(left_edge = 1, right_edge = 1, left_current = 1, right_current = 1) %}
+        {% if page_num %}
+            {% if compras.page == page_num %}
+                <a  class="btn btn-primary mb-4" href="{{ url_for('compras.mis_compras', page = page_num) }}">{{ page_num }}</a>
+            {% else %}
+                <a  class="btn btn-outline-primary mb-4" href="{{ url_for('compras.mis_compras', page = page_num) }}">{{ page_num }}</a>
+            {% endif %}
+        {% else %}
+            ...
+        {% endif %}
+    {% endfor %}
+
+
+{% endblock content %}
+
+{% block scripts%}
+<script src="{{url_for('static', filename='scripts/filtro_fechas.js')}}"></script>
+{% endblock scripts %}

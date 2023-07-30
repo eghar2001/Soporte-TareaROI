@@ -1,13 +1,15 @@
+from typing import List
+
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
 from eggList import db
-from eggList.listas.forms import CrearListaForm
-from eggList.models import ListaProductos, Producto, Usuario, RolLista, Compra
+from eggList.listas.forms import CrearListaForm, EnSupermercadoForm
+from eggList.models import ListaProductos, Producto, Usuario, RolLista, Compra, Supermercado, Ciudad, Provincia
 from eggList.productos.forms import AgregarProductoForm, CarritoForm
 from eggList.utils import send_email
 from eggList.usuarios.logic import user_roles_required
 from eggList.listas import logic as lista_logic
-
+from eggList.compras import logic as compra_logic
 listas = Blueprint('listas', __name__)
 
 
@@ -28,8 +30,7 @@ def mis_listas():
                 semana = lista.get_semana()
                 listas_por_semana.append((semana,[lista]))
                 index += 1
-    else:
-        flash("No tiene ninguna lista creada, por favor agregue una", "primary")
+
 
     return render_template("listas/mis_listas.html", listas_por_semana = listas_por_semana)
 
@@ -67,39 +68,46 @@ def crear_lista():
 @user_roles_required("Usuario")
 def lista(lista_id):
     lista = ListaProductos.query.get_or_404(lista_id)
-    if current_user in lista.usuarios:
-        if lista_logic.user_has_list_role(lista,current_user,"Comprador"):
-            form_carrito = CarritoForm()
-            productos_disponibles = list(filter(lambda producto: not producto.id_compra, lista.productos))
-            productos_en_carrito = []
-            productos_fuera_de_carrito = []
-            for producto in productos_disponibles:
-                if producto.esta_en_carrito:
-                    productos_en_carrito.append(producto)
-                else:
-                    productos_fuera_de_carrito.append(producto)
-            total = lista.get_total()
-            return render_template("listas/lista_comprador.html", lista=lista,
-                                   productos_en_carrito=productos_en_carrito,
-                                   productos_fuera_de_carrito=productos_fuera_de_carrito,
-                                   form_carrito=form_carrito, total=total)
-        else:
-            lista.productos.sort(key = lambda producto: bool(producto.id_compra))
-            return render_template("listas/lista_armador.html",lista = lista)
 
-
-
-
-    else:
+    if not current_user in lista.usuarios:
         abort(403)
+    compra_disponible = lista_logic.buscar_compra_disponible(lista)
+    if lista_logic.user_has_list_role(lista,"Comprador") and compra_disponible:
+        form_carrito = CarritoForm()
+        productos_disponibles = list(filter(lambda producto: not producto.id_compra, lista.productos))
+        productos_en_carrito = []
+        productos_fuera_de_carrito = []
+        for producto in productos_disponibles:
+            if producto.esta_en_carrito:
+                productos_en_carrito.append(producto)
+            else:
+                productos_fuera_de_carrito.append(producto)
+        total = lista.get_total()
+        return render_template("listas/lista_comprador.html", lista=lista,
+                               productos_en_carrito=productos_en_carrito,
+                               productos_fuera_de_carrito=productos_fuera_de_carrito,
+                               form_carrito=form_carrito, total=total)
+    else:
+        form = EnSupermercadoForm()
+
+        ciudad_user:Ciudad = Ciudad.query.filter(Ciudad.id == current_user.id_ciudad).first()
+        supermercados:List[Supermercado] = Supermercado.query.filter(Supermercado.id_ciudad == ciudad_user.id).all()
+        form.supermercado.choices = [(super.id, super.nombre) for super in supermercados]
+        lista.productos.sort(key = lambda producto: bool(producto.id_compra))
+        return render_template("listas/lista_armador.html",lista = lista,
+                               supermercados = supermercados, form_super = form,
+                               ciudad_user=ciudad_user, compra = compra_disponible)
 
 
-@listas.route("/lista/<int:lista_id>/en_supermercado")
+
+
+@listas.route("/lista/<int:lista_id>/en_supermercado/<int:supermercado_id>", methods = ["GET","POST"])
 @login_required
 @user_roles_required("Usuario")
-def en_supermercado(lista_id):
+def en_supermercado(lista_id, supermercado_id):
     lista = ListaProductos.query.get_or_404(lista_id)
-    lista_logic.actualizar_rol(lista, current_user,"Comprador")
+    supermercado = Supermercado.query.get_or_404(supermercado_id)
+    lista_logic.en_supermercado(lista, supermercado)
     return redirect(url_for("listas.lista",lista_id = lista.id))
 
 
@@ -112,7 +120,8 @@ def agregar_producto(lista_id):
     if form.validate_on_submit():
 
         producto = Producto(descripcion=form.descripcion.data,
-                            cantidad=form.cantidad.data)
+                            cantidad=form.cantidad.data if form.cantidad.data != 0 else None,
+                            autor = current_user)
         lista_logic.agregar_producto(lista,producto)
         flash(f'Se agregó correctamente el producto {producto.descripcion} a tu lista!', "success")
         return redirect(url_for('listas.lista', lista_id = lista.id))
@@ -125,14 +134,30 @@ def agregar_producto(lista_id):
 @user_roles_required("Usuario")
 def comprar(lista_id):
     lista = ListaProductos.query.get_or_404(lista_id)
-    if lista_logic.user_has_list_role(lista,current_user, "Comprador"):
+    compra_disponible = lista_logic.buscar_compra_disponible(lista)
+    if lista_logic.user_has_list_role(lista, "Comprador") and compra_disponible:
         productos_comprados = list(filter(lambda producto: producto.esta_en_carrito and not producto.id_compra, lista.productos))
         if not productos_comprados:
             flash("No hay productos en tu carrito","primary")
             return redirect(url_for("listas.lista", lista_id = lista.id))
-        compra = Compra(productos=productos_comprados, id_comprador=current_user.id)
-        db.session.add(compra)
-        db.session.commit()
-        lista_logic.actualizar_rol(lista, current_user, "Armador")
+        lista_logic.actualizar_rol(lista, "Armador", commit=False)
+        compra_logic.comprar(compra_disponible, productos_comprados, commit=True)
+
+
 
         return redirect(url_for("listas.lista", lista_id = lista.id))
+
+@listas.route("/listas/<int:lista_id>/salir_del_super")
+@login_required
+@user_roles_required("Usuario")
+def salir_del_super(lista_id):
+    lista = ListaProductos.query.get_or_404(lista_id)
+    if current_user in lista.usuarios:
+        lista_logic.actualizar_rol(lista, "Armador", commit = True)
+        if  (not any([lista_logic.user_has_list_role(lista=lista,rol_lista_str= "Comprador",user= user)
+                and user != current_user for user in lista.usuarios])):
+            lista_logic.salir_del_super(lista)
+        return redirect(url_for('listas.lista', lista_id = lista.id))
+
+    else:
+        abort(403)

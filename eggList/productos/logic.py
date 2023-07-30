@@ -2,8 +2,7 @@ from eggList import db
 from eggList.models import Producto
 from eggList.productos.forms import ModificarProductoForm
 
-def poner_en_carrito(producto:Producto, precio = 0):
-    producto.precio = precio
+def poner_en_carrito(producto:Producto):
     producto.esta_en_carrito = True
     db.session.commit()
 

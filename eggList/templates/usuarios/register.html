@@ -1,6 +1,6 @@
 {% extends 'layout.html' %}
 {% block content %}
-<form method="POST" action="">
+<form method="POST" action="" class="container">
     {{ form.hidden_tag() }}
   <div class="mb-3">
     {{ form.nombre.label(class="form-label")}}
@@ -43,17 +43,18 @@
 
   </div>
   <div class="mb-3">
-      {{ form.rol_en_compra.label(class="form-label")}}
-
-      <ul style = "list-style:none">
-          {% for radio in form.rol_en_compra %}
-          <li>{{radio(class="form-check-input")}} {{radio.label(class="form-check-label")}}</li>
-          {% endfor %}
-      </ul>
-
-
-
-
+    {{ form.telefono.label(class="form-label")}}
+    {% if form.telefono.errors %}
+        {{ form.telefono(class="form-control form-control-lg is-invalid") }}
+        <div class="invalid-feedback">
+            {% for error in form.telefono.errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ form.telefono(class="form-control form-control-lg") }}
+        <span class="form-text">Ingrese [Num. de area sin 0] [telefono sin 15]</span>
+    {% endif %}
   </div>
   <div class="mb-3">
     {{ form.password.label(class="form-label")}}
@@ -82,9 +83,18 @@
     {% endif %}
   </div>
 
+
+
   {{form.submit(class="btn btn-primary")}}
 
 
 </form>
+<script>
 
+    provincia_select = document.getElementById("provincia-select")
+    provincia_select.addEventListener("click", console.log("Se cambio el valor de su prosds"))
+    ciudad_select = document.getElementById('ciudad-select');
+    ciudad_select.addEventListener("click", console.log("hiciste un click en el select"))
+    ciudad_select.innerHtml = "<option>Sucutrutuc</option>"
+</script>
 {% endblock content %}

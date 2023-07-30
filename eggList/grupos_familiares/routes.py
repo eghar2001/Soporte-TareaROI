@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
 from eggList import db
-from eggList.grupos_familiares.forms import CrearGrupoFamiliarForm, AgregarUsuarioForm
+from eggList.grupos_familiares.forms import GrupoFamiliarForm, AgregarUsuarioForm
 from eggList.models import GrupoFamiliar, Usuario
-from eggList.utils import send_email
+from eggList.utils import send_email, save_family_picture
 from eggList.usuarios.logic import verify_id_token, user_roles_required,get_user_by_email
 from eggList.grupos_familiares import logic as grupo_logic
 
@@ -13,17 +13,21 @@ grupos_familiares = Blueprint('grupos_familiares',__name__)
 @login_required
 @user_roles_required("Usuario")
 def crear_grupo_familiar():
-    form = CrearGrupoFamiliarForm()
+    form = GrupoFamiliarForm()
     if form.validate_on_submit():
+        imagen:str = None
+        if form.imagen.data:
+            imagen =save_family_picture(form.imagen.data)
         grupo = GrupoFamiliar(
             nombre_familia = form.familia.data,
-            integrantes = [current_user, ]
+            integrantes = [current_user, ],
+            imagen_grupo = imagen
         )
         grupo_logic.crear_grupo(grupo)
         flash("Su grupo familiar se a creado correctamente", "success")
         return redirect(url_for('grupos_familiares.grupo_familiar'))
 
-    return render_template('grupos_familiares/crear_grupo_form.html', form=form)
+    return render_template('grupos_familiares/grupo_familiar_form.html', form=form)
 
 @grupos_familiares.route("/grupo_familiar")
 @login_required
@@ -71,5 +75,16 @@ def confirmar_usuario(grupo_familiar, confirm_token):
     flash(f"'{usuario_nuevo.email}' se ha unido satisfactoriamente al grupo familiar '{grupo.nombre_familia}'", "success")
     return redirect(url_for('usuarios.login'))
 
+
+@grupos_familiares.route("/grupo_familiar/editar")
+@login_required
+@user_roles_required("Usuario")
+def editar(grupo_familiar:str):
+    grupo = grupo_logic.get_grupo_by_nombre(current_user.grupo_familiar)
+    if not grupo:
+        abort(404)
+    form = GrupoFamiliarForm()
+    form.familia.data == current_user.grupo_familiar.nombre_familia
+    return render_template("/grupos_familiares/grupo_familiar_form.html", form=form)
 
 

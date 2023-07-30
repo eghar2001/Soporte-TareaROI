@@ -2,14 +2,24 @@
 {% block content %}
     {% if current_user.grupo_familiar %}
         <h1 class="mb-4">Grupo Familiar</h1>
-        <div class="border rounded p-3 mb-3">
-            <h5 class="pb-2 border-bottom">Nombre del grupo: <span class="text-primary">{{current_user.grupo_familiar.nombre_familia}}</span></h5>
-            <h5>Integrantes:</h5>
-            <ul>
-                {% for integrante in current_user.grupo_familiar.integrantes %}
-                    <li>{{integrante.nombre}} {{integrante.apellido}} ({{integrante.email}})</li>
-                {% endfor %}
-            </ul>
+        <div class="card p-3 mb-3">
+            <img class="card-img-top grupo-familiar-img rounded border border-2 text-secondary" src="{{current_user.grupo_familiar.get_img_url()}}" alt="Imagen grupo familiar {{current_user.grupo_familiar.nombre}}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <box-icon size="md"  class="mb-0 p-0" color="gray" name='group'></box-icon>
+                        <h5 class="card-title d-inline">Nombre del grupo:<br><span class="text-primary">{{current_user.grupo_familiar.nombre_familia}}</span></h5>
+                    </div>
+                </div>
+                <h5 class="card-text">Integrantes:</h5>
+                <ul style="list-style:none;">
+                    {% for integrante in current_user.grupo_familiar.integrantes %}
+                        <li class="mb-1 d-flex align-items-center card-text">
+                            <a href="{{url_for('usuarios.perfil',usuario_email = integrante.email)}}"><img class = "mb-1 sm-profile-pic"src="{{url_for('static', filename='profile_pics/'+integrante.imagen_perfil)}}">{{integrante.nombre}} {{integrante.apellido}}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
         <div class="border rounded p-3">
             <form method="POST" action="{{url_for('grupos_familiares.agregar_usuario')}}">
@@ -38,7 +48,7 @@
         <p>Tenes 2 formas acceder a uno</p>
         <ul>
           <li><a href="{{url_for('grupos_familiares.crear_grupo_familiar')}}">Crear un grupo familiar</a></li>
-          <li>Que alguien me invite a su grupo familiar</li>
+          <li>Que alguien me invite al suyo</li>
         </ul>
       </div>
 

@@ -1,12 +1,47 @@
 from datetime import datetime, timedelta
+from typing import List
 
-from flask import current_app
+from flask import current_app, url_for
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from sqlalchemy import UniqueConstraint
 
-from eggList import db, login_manager
-from flask_login import UserMixin
+from eggList import db, login_manager, bcrypt
+from flask_login import UserMixin, current_user
 
+
+
+class Provincia(db.Model):
+    __tablename__ = "provincias"
+
+    id = db.Column(db.Integer(),primary_key = True, autoincrement = True)
+    nombre = db.Column(db.String(100),nullable = False)
+    ciudades = db.relationship("Ciudad",back_populates = "provincia")
+
+
+class Ciudad(db.Model):
+    __tablename__ = "ciudades"
+
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    id_provincia = db.Column(db.Integer(),db.ForeignKey("provincias.id"),nullable = False)
+    provincia = db.relationship("Provincia", back_populates="ciudades")
+    supermercados = db.relationship("Supermercado", back_populates="ciudad")
+
+
+class Supermercado(db.Model):
+    __tablename__ = "supermercados"
+
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(), nullable=False, unique=False)
+
+    id_ciudad = db.Column(db.Integer(),db.ForeignKey("ciudades.id"),nullable = False)
+    ciudad = db.Relationship("Ciudad", back_populates = "supermercados")
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __str__(self):
+        return f"{self.nombre} ({self.ciudad.nombre}, {self.ciudad.provincia.nombre})"
 
 class Producto(db.Model):
     """
@@ -17,11 +52,12 @@ class Producto(db.Model):
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     descripcion = db.Column(db.String(100), nullable=False)
     precio = db.Column(db.Numeric(10, 2), nullable=True)
-    cantidad = db.Column(db.Integer(), nullable=False, default=1)
+    cantidad = db.Column(db.Integer())
     esta_en_carrito = db.Column(db.Boolean(), default=False)
     id_lista = db.Column(db.Integer(), db.ForeignKey('listas.id'))
-    id_compra = db.Column(db.Integer, db.ForeignKey('compras.id'))
-
+    id_compra = db.Column(db.Integer(), db.ForeignKey('compras.id'))
+    id_autor = db.Column(db.Integer(), db.ForeignKey('usuarios.id'), nullable=False)
+    autor = db.Relationship('Usuario')
 
     def get_total(self):
         if self.precio:
@@ -29,13 +65,32 @@ class Producto(db.Model):
         return self.cantidad
 
 
-class Compra(db.Model):
-    __tablename__="compras"
 
-    id = db.Column(db.Integer(), primary_key = True, autoincrement = True)
-    fecha_compra = db.Column(db.DateTime(), nullable = False, default = datetime.utcnow())
+
+
+class Compra(db.Model):
+    __tablename__ = "compras"
+
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    fecha_compra = db.Column(db.DateTime(),nullable = True)
     productos = db.relationship("Producto")
-    id_comprador = db.Column(db.Integer(), db.ForeignKey("usuarios.id"))
+    id_comprador = db.Column(db.Integer(), db.ForeignKey("usuarios.id"),nullable = True)
+    id_lista = db.Column(db.Integer(), db.ForeignKey("listas.id"), nullable =False)
+    id_supermercado = db.Column(db.Integer, db.ForeignKey("supermercados.id"), nullable = False)
+    supermercado = db.relationship("Supermercado")
+
+
+    def comprar(self, productos: List[Producto]):
+        self.id_comprador = current_user.id
+        self.fecha_compra = datetime.utcnow()
+        self.productos = productos
+
+    def fue_comprado(self):
+        return bool(self.fecha_compra)
+
+    def get_total(self):
+        return sum([prod.precio * prod.cantidad for prod in self.productos])
+
 
 class ListaProductos(db.Model):
     """
@@ -48,8 +103,12 @@ class ListaProductos(db.Model):
     fecha_creacion = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow())
     id_autor = db.Column(db.Integer(), db.ForeignKey('usuarios.id'), nullable=False)
     autor = db.relationship('Usuario')
-    usuarios = db.relationship('Usuario',secondary = "usuarios_listas" , back_populates = "listas")
+    usuarios = db.relationship('Usuario', secondary="usuarios_listas", back_populates="listas")
     productos = db.relationship('Producto')
+
+    def __str__(self):
+        return f"ListaProductos<fecha_creacion: {self.fecha_creacion} -- autor: {self.autor.nombre} {self.autor.apellido}>"
+
 
     def agregar_producto(self, producto: Producto):
         self.productos.append(producto)
@@ -57,7 +116,7 @@ class ListaProductos(db.Model):
     def get_total(self):
         total = 0
         for producto in self.productos:
-            if producto.esta_en_carrito and producto.precio:
+            if producto.esta_en_carrito and producto.precio and not producto.id_compra:
                 total += producto.get_total()
         return total
 
@@ -68,8 +127,8 @@ class ListaProductos(db.Model):
         es_familiar = False
         return self.autor == user or user in self.usuarios
 
-
-
+    def faltan_productos(self):
+        return any([bool(prod.id_compra) and not prod.esta_en_carrito for prod in self.productos])
 
 class GrupoFamiliar(db.Model):
     """
@@ -79,11 +138,15 @@ class GrupoFamiliar(db.Model):
     __tablename__ = "grupos_familiares"
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     nombre_familia = db.Column(db.String(50), nullable=False, unique=True)
+    imagen_grupo = db.Column(db.String(20), nullable=  False, default = "default.jpg")
     integrantes = db.relationship('Usuario', back_populates="grupo_familiar")
 
     def agregar_integrante(self, nuevo_integrante):
         if isinstance(nuevo_integrante, Usuario):
             self.integrantes.append(nuevo_integrante)
+
+    def get_img_url(self):
+        return url_for('static',filename = "grupo_familiar_pics/"+self.imagen_grupo)        
 
 
 class RolLista(db.Model):
@@ -120,15 +183,13 @@ class RolUsuario(db.Model):
     def __repr__(self):
         return f"<RolUsuario {self.name}>"
 
-    def __eq__(self, other):
-        return self.name == other.name
 
-#Clase Usuario
+
+
+# Clase Usuario
 @login_manager.user_loader
 def load_user(user_id):
     return Usuario.query.get(int(user_id))
-
-
 
 
 class Usuario(db.Model, UserMixin):
@@ -140,20 +201,30 @@ class Usuario(db.Model, UserMixin):
     apellido = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     email_confirmed_at = db.Column(db.DateTime(), nullable=True)
-    imagen_perfil = db.Column(db.String(20), nullable=False, default="default.jpg")
+    telefono = db.Column(db.String(12), nullable = False)
+    imagen_perfil = db.Column(db.String(20), nullable=False, default="default.webp")
     password = db.Column(db.String(60), nullable=False)
     fecha_creacion = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow())
-    roles = db.relationship('RolUsuario', secondary='usuarios_roles')
 
+    roles = db.relationship('RolUsuario', secondary='usuarios_roles')
 
     id_grupo_familiar = db.Column(db.Integer(), db.ForeignKey('grupos_familiares.id'), nullable=True)
     grupo_familiar = db.relationship('GrupoFamiliar', back_populates="integrantes")
 
+    id_ciudad =db.Column(db.Integer(),db.ForeignKey("ciudades.id"), nullable=True)
+    ciudad = db.relationship('Ciudad')
+
     # Posible mapeo a borrar
-    listas = db.relationship('ListaProductos', secondary = "usuarios_listas", back_populates = "usuarios")
+    listas = db.relationship('ListaProductos', secondary="usuarios_listas", back_populates="usuarios")
 
     def __eq__(self, other):
         return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def get_img_url(self):
+        return url_for('static',filename = f'profile_pics/{current_user.imagen_perfil}')
 
     def has_user_role(self, rol_str: str) -> bool:
         return any([rol_str == rol.name for rol in self.roles])
@@ -173,15 +244,18 @@ class Usuario(db.Model, UserMixin):
     def esta_confirmado(self):
         return bool(self.email_confirmed_at)
 
+    def check_password(self, password:str):
+        return bcrypt.check_password_hash(self.password, password)
 
-#TABLAS INTERMEDIAS
+
+# TABLAS INTERMEDIAS
 
 class UsuarioLista(db.Model):
     """Clase que representa la tabla intermedia entre un usuario y su listas"""
     __tablename__ = 'usuarios_listas'
-    usuario_id = db.Column( db.Integer(), db.ForeignKey('usuarios.id'), primary_key = True)
-    lista_id = db.Column( db.Integer(), db.ForeignKey('listas.id'), primary_key=True)
-    role_id = db.Column( db.Integer(),db.ForeignKey('roles_en_lista.id'), nullable = False)
+    usuario_id = db.Column(db.Integer(), db.ForeignKey('usuarios.id'), primary_key=True)
+    lista_id = db.Column(db.Integer(), db.ForeignKey('listas.id'), primary_key=True)
+    role_id = db.Column(db.Integer(), db.ForeignKey('roles_en_lista.id'), nullable=False)
     role = db.relationship("RolLista")
 
 
@@ -189,5 +263,3 @@ usuarios_roles = db.Table('usuarios_roles',
                           db.Column('usuario_id', db.Integer(), db.ForeignKey('usuarios.id')),
                           db.Column('role_id', db.Integer(), db.ForeignKey('roles.id'))
                           )
-
-

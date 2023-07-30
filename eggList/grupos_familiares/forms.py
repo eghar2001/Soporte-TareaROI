@@ -1,17 +1,20 @@
+from flask_login import current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from flask_wtf.file import FileAllowed
+from wtforms import StringField, SubmitField, FileField
 from wtforms.validators import DataRequired, Length, ValidationError, Email
 
 from eggList.models import GrupoFamiliar, Usuario
 
 
-class CrearGrupoFamiliarForm(FlaskForm):
+class GrupoFamiliarForm(FlaskForm):
     familia = StringField('Nombre del Grupo Familiar', validators=[DataRequired(), Length(min=3, max=50)])
+    imagen = FileField('Imagen', validators=[FileAllowed(['jpg','jpeg','png', 'webp'])])
     submit = SubmitField('Crear')
 
     def validate_familia(self, familia):
         grupo = GrupoFamiliar.query.filter(GrupoFamiliar.nombre_familia == familia.data).first()
-        if grupo:
+        if grupo and grupo.nombre != current_user.grupo_familiar.nombre_familia:
             raise ValidationError("Esa nombre ya existe")
 
 

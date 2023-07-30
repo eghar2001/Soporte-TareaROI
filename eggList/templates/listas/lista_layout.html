@@ -1,17 +1,34 @@
 {% extends 'layout.html'%}
 
 {% block content %}
-<div class="mb-2 border-bottom">
-  <div class="d-flex flex-row justify-content-between align-items-center  ">
-    <h1>Lista del <span class="text-primary">{{lista.fecha_creacion.strftime('%Y-%m-%d')}}</span></h1>
-    <a href="{{ url_for('listas.agregar_producto', lista_id = lista.id) }}" class="btn  btn-primary ">Agregar</a>
-  </div>
-  <p>Descripcion: {{lista.descripcion}}</p>
-</div>
+<article>
 
-
+  <section class="mb-2 border-bottom">
+    <div class="d-flex flex-row justify-content-between align-items-center  ">
+      <h1>Lista del <span class="text-primary">{{lista.fecha_creacion.strftime('%Y-%m-%d')}}</span></h1>
+      <a href="{{ url_for('listas.agregar_producto', lista_id = lista.id) }}" class="btn d-flex align-items-center ps-1 btn-primary ">
+        <box-icon  color="white" name='plus' ></box-icon>
+        Agregar
+      </a>
+    </div>
+    <p>Descripcion: {{lista.descripcion}}</p>
+  </section>
+</article>
+<article class="mb-4">
 {% block productos %}
 
 {% endblock productos %}
+</article>
+
 
 {% endblock content %}
+
+
+{% block scripts %}
+<script>
+  setInterval("location.reload()",25000);
+</script>
+{% block lista_scripts %}
+
+{% endblock lista_scripts%}
+{% endblock scripts %}

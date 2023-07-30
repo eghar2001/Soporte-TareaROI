@@ -10,10 +10,12 @@
   <div class="mb-3">
     {{form.descripcion.label(class="form-label")}}
     {{form.descripcion(class="form-control")}}
+
   </div>
   <div class="mb-3">
     {{form.cantidad.label(class="form-label")}}
     {{form.cantidad(class="form-control")}}
+    <p class="form-text">Si no sabe la cantidad, ingrese 0</p>
   </div>
 
   {{form.submit(class='btn btn-primary')}}

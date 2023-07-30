@@ -1,69 +1,130 @@
 {% extends 'listas/lista_layout.html' %}
 
 {% block productos %}
+<article class="container">
+  <section>
+    <h5 class="ms-0 mb-5">Productos Agregados</h5>
+  </section>
 
-<h4 class="mb-2">Productos Agregados</h4>
-<table class="table mb-5">
-  <thead>
-    <tr>
-      <th scope="col">Delete</th>
-      <th scope="col">Producto</th>
-      <th scope="col">Cantidad</th>
-      <th scope="col">Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
 
     {% for producto in lista.productos %}
-        <tr >
-          <th scope="row">
+    <section class="row">
+      <div class="col-12 mb-2 border rounded border-2 p-1  d-flex flex-column align-items-center justify-content-between">
 
-              <button type="button"  data-bs-toggle="modal" data-bs-target="#borrarProducto{{producto.id}}">❌</button>
-
-          </th>
-          {% if producto.id_compra %}
-            <td><del>{{producto.descripcion}}</del> (<span class="text-danger">COMPRADO</span>)</td>
-          {% else %}
-            <td>{{producto.descripcion}}</td>
+        {% if not producto.id_compra %}
+          <button class="align-self-end btn btn-transparent" type="button" data-bs-toggle="modal" data-bs-target="#borrarProducto{{producto.id}}">❌</button>
+          <h3 class="fw-bold m-0">{{producto.descripcion}} {% if producto.cantidad %}<span class="text-secondary">x{{producto.cantidad}} {% endif %}</span></h3>
+        {% else %}
+          <h3 class="fw-bold m-0"><del><span class="text-danger-emphasis">{{producto.descripcion}}</span></del> <br>(Comprado)</h3>
+        {% endif %}
+        <div class="mt-1 mb-2">
+          {% if producto.precio %}
+          <p class="m-0"><span class="text-secondary">Precio:</span> <span class="fw-bold">${{producto.precio}}</span></p>
           {% endif %}
-          <td>{{producto.cantidad}}</td>
-          <td class="p-2">
-            <a class="btn mb-2 btn-outline-info" href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝</a>
-
-
-
-          </td>
-        </tr>
-
-        <div class="modal fade" id="borrarProducto{{producto.id}}" tabindex="-1" aria-labelledby="borrarProducto{{producto.id}}Label" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h3 class="modal-title fs-5" id="borrarProducto{{producto.id}}Label">Desea borrar el producto "{{producto.descripcion}}?"</h3>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="{{url_for('productos.borrar_producto', producto_id = producto.id)}}">
-                  <input type="submit" class="btn btn-outline-danger" value="Borrar"></input>
-                </form>
-              </div>
-            </div>
-          </div>
+        </div>
+        <div class="d-flex flex-column align-items-center justify-content-start">
+          <span class="text-secondary">Pedido por:</span>
+          <a href="{{url_for('usuarios.perfil', usuario_email = producto.autor.email)}}" class=" m-0 d-flex flex-row align-items-center">
+            <img src="{{lista.autor.get_img_url()}}" class="sm-profile-pic m-0" alt="">
+            <span class="fw-bold">{{producto.autor.nombre}} {{producto.autor.apellido}}</span>
+          </a>
+        </div>
+        <div class="d-flex flex-row mt-2" style="column-gap:10px;">
+          {% if not producto.id_compra %}
+            <a class="btn btn-sm mb-2 btn-outline-info"
+              href="{{url_for('productos.modificar_producto', producto_id = producto.id)}}">Modificar📝
+            </a>
+          {% endif %}
         </div>
 
 
 
-  {% endfor %}
-  </tbody>
-</table>
+      </div>
 
 
-<a href="{{url_for('listas.en_supermercado', lista_id = lista.id)}}" class="btn btn-outline-info">
-En supermercado
-</a>
 
+
+
+  </section>
+  <div class="modal fade" id="borrarProducto{{producto.id}}" tabindex="-1" aria-labelledby="borrarProducto{{producto.id}}Label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title fs-5" id="borrarProducto{{producto.id}}Label">Desea borrar el producto "{{producto.descripcion}}?"</h3>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <form method="POST" action="{{url_for('productos.borrar_producto', producto_id = producto.id)}}">
+            <input type="submit" class="btn btn-outline-danger" value="Borrar"></input>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+    {% endfor %}
+
+</article>
+
+
+<!-- Button trigger modal -->
+<button type="button" class="mt-3 d-flex align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#enSupermercadoModal">
+  <box-icon color="white" name='store'></box-icon>
+  En supermercado
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="enSupermercadoModal" tabindex="-1" aria-labelledby="enSupermercadoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      {% if not compra %}
+      <div class="modal-header"><h3>Elija su supermercado</h3></div>
+      <div class="modal-body">
+
+          <p class="text-secondary">Used se encuentra en <b>{{ciudad_user.nombre}}, {{ciudad_user.provincia.nombre}}</b></p>
+          <form method="POST" id="form-super" action = "">
+
+            {{form_super.hidden_tag()}}
+            <div class="mb-3">
+              <label class="form-label">Supermercado</label>
+              <select id="select-super" class="form-select">
+                {% for super in supermercados%}
+                  <option value="{{super.id}}">{{super.nombre}}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <input id="submit-super" type="submit" class="btn btn-primary" value = "En Supermercado">
+             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Salir</button>
+          </form>
+
+      </div>
+    {% else %}
+      <div class="modal-header"><h3>Ya hay una compra haciendose</h3></div>
+      <div class="modal-body">
+        <p>Espere a que finalice la compra actual o ayude a terminarla</p>
+        <div class="d-flex flex-row">
+          <a class="btn btn-primary me-2" href="{{url_for('listas.en_supermercado', lista_id = lista.id, supermercado_id = compra.id_supermercado)}}">Ir a compra</a>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Salir</button>
+        </div>
+      </div>
+
+    {% endif %}
+    </div>
+  </div>
+</div>
 
 {% endblock productos %}
 
+{% block lista_scripts %}
+<script>
+submit_en_super = document.getElementById("submit-super");
+form_super = document.getElementById("form-super");
+select_super = document.getElementById("select-super");
+submit_en_super.onclick = () => {
+  form_super.setAttribute("action",{{lista.id}}+"/en_supermercado/"+select_super.value);
+  alert({{current_user.nombre}});
+};
+</script>
+
+{% endblock lista_scripts %}

@@ -1,6 +1,10 @@
+from flask_login import current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Length
+
+from eggList.models import Provincia
+
 
 class CrearListaForm(FlaskForm):
     descripcion = StringField('Descripcion', validators = [DataRequired(),Length(min = 3, max = 100)])
@@ -9,4 +13,7 @@ class CrearListaForm(FlaskForm):
 
 
 
+class EnSupermercadoForm(FlaskForm):
 
+    supermercado = SelectField("Supermercado", validate_choice = True)
+    submit = SubmitField("En Supermercado")
