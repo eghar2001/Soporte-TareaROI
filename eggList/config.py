@@ -1,7 +1,7 @@
 import os
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
+    SQLALCHEMY_DATABASE_URI = 'mysql://user:pene.123@localhost/egglist'
     SECRET_KEY = "e49e3f3ea75909673260cea468b84d3a"
     SECURITY_PASSWORD_SALT = SECRET_KEY
     MAIL_SERVER = 'smtp.mail.yahoo.com'

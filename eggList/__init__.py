@@ -35,6 +35,7 @@ def create_app(config_class = Config):
     from eggList.grupos_familiares.routes import grupos_familiares
     from eggList.compras.routes import compras
     from eggList.provincias.routes import provincias
+    from eggList.errores.routes import errores
 
     app.register_blueprint(listas)
     app.register_blueprint(productos)
@@ -43,5 +44,6 @@ def create_app(config_class = Config):
     app.register_blueprint(grupos_familiares)
     app.register_blueprint(compras)
     app.register_blueprint(provincias)
+    app.register_blueprint(errores)
 
     return app

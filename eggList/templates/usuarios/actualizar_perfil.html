@@ -13,7 +13,7 @@
             <div class="row   justify-content-center justify-content-md-start">
                 <div class=" col-12 col-md-2 px-0 d-flex flex-column justify-content-center align-items-center
                                 flex-md-row align-items-md-end">
-                    <img  src="{{usuario.get_img_url()}}" class="mb-1  text-center profile-pic imagen">
+                    <img  src="{{usuario.get_img_url()}}" class="mb-1  me-md-2 text-center profile-pic imagen">
                     <div>
                         {{form.imagen_perfil.label(class="form-control-label")}}
                         {% if form.imagen_perfil.errors %}
@@ -28,7 +28,7 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="col-12 col-md-2">
+                <div class="col-12 col-md-2 d-flex flex-column justify-content-end">
                     {{form.nombre.label(class=" mb-1 form-control-label")}}
                     {% if form.nombre.errors %}
                             {{form.nombre(class="form-control  is-invalid" )}}
@@ -41,14 +41,14 @@
                             {{form.nombre(class="form-control" )}}
                         {% endif %}
                 </div>
-                <div class="col-12 col-md-2">
+                <div class="col-12 col-md-2 d-flex flex-column justify-content-end">
                     {{form.apellido.label(class="mb-1 form-control-label")}}
                     {% if form.apellido.errors %}
                             {{form.apellido(class="form-control  is-invalid" )}}
                             <div >
                                 {% for error in form.apellido.errors%}
                                     <p class="form-text text-danger">{{error}}</p>
-                                {% endfor %}apellido
+                                {% endfor %}
                             </div>
                         {% else %}
                             {{form.apellido(class="form-control" )}}

@@ -13,7 +13,7 @@ class AgregarProductoForm(FlaskForm):
 class ModificarProductoForm(FlaskForm):
     descripcion = StringField('Producto', validators=[DataRequired()])
     cantidad = IntegerField('Cantidad', validators=[])
-    precio = DecimalField('Precio', places=2, rounding=decimal.ROUND_UP)
+    precio = DecimalField('Precio Unitario', places=2, rounding=decimal.ROUND_UP)
     submit = SubmitField('Modificar')
 
 

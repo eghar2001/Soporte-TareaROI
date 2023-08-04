@@ -20,13 +20,13 @@ def login():
     if form.validate_on_submit():
         user = usuario_logic.get_user_by_email(form.email.data)
         if not user:
-            flash("Está mal el email","danger")
+            flash("El mail ingresado es incorrecto","danger")
             return redirect(url_for('usuarios.login'))
         if not user.email_confirmed_at:
             flash("No verificó el email, por favor intente registrarse denuevo", "danger")
             return redirect(url_for('usuarios.register'))
         if not user.check_password(form.password.data):
-            flash("Está mal la contraseña","danger")
+            flash("La contraseña ingresada es incorrecta","danger")
             return redirect(url_for('usuarios.login'))
 
         login_user(user, form.remember.data, duration = timedelta(minutes=30))

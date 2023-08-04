@@ -1,7 +1,7 @@
 import datetime
 from typing import List
 
-from flask import Blueprint, render_template, request, flash, abort
+from flask import Blueprint, render_template, request, flash, abort, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import and_
 
@@ -30,6 +30,7 @@ def mis_compras():
         supermercado:Supermercado = Supermercado.query.get_or_404(supermercado_id) if supermercado_id != 0 else None
         if fecha_desde > fecha_hasta:
             flash("No ingreso fechas validas", "danger")
+            return redirect(url_for("compras.mis_compras"))
         compras = data_usuarios.get_compras_con_filtros_paginate(fecha_desde=fecha_desde, fecha_hasta=fecha_hasta,
                                                                page=page, supermercado = supermercado)
     else:

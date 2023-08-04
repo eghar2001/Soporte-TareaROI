@@ -32,7 +32,7 @@ class Supermercado(db.Model):
     __tablename__ = "supermercados"
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
-    nombre = db.Column(db.String(), nullable=False, unique=False)
+    nombre = db.Column(db.String(70), nullable=False, unique=False)
 
     id_ciudad = db.Column(db.Integer(),db.ForeignKey("ciudades.id"),nullable = False)
     ciudad = db.Relationship("Ciudad", back_populates = "supermercados")
@@ -124,8 +124,8 @@ class ListaProductos(db.Model):
         return self.fecha_creacion.date() - timedelta(days=self.fecha_creacion.weekday())
 
     def usuario_valido(self, user):
-        es_familiar = False
-        return self.autor == user or user in self.usuarios
+        es_usuario = user in self.usuarios
+        return es_usuario
 
     def faltan_productos(self):
         return any([bool(prod.id_compra) and not prod.esta_en_carrito for prod in self.productos])
@@ -224,7 +224,7 @@ class Usuario(db.Model, UserMixin):
         return hash(self.id)
 
     def get_img_url(self):
-        return url_for('static',filename = f'profile_pics/{current_user.imagen_perfil}')
+        return url_for('static',filename = f'profile_pics/{self.imagen_perfil}')
 
     def has_user_role(self, rol_str: str) -> bool:
         return any([rol_str == rol.name for rol in self.roles])

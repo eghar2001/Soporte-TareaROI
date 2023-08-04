@@ -69,7 +69,7 @@ def crear_lista():
 def lista(lista_id):
     lista = ListaProductos.query.get_or_404(lista_id)
 
-    if not current_user in lista.usuarios:
+    if not lista.usuario_valido(current_user):
         abort(403)
     compra_disponible = lista_logic.buscar_compra_disponible(lista)
     if lista_logic.user_has_list_role(lista,"Comprador") and compra_disponible:
@@ -86,7 +86,7 @@ def lista(lista_id):
         return render_template("listas/lista_comprador.html", lista=lista,
                                productos_en_carrito=productos_en_carrito,
                                productos_fuera_de_carrito=productos_fuera_de_carrito,
-                               form_carrito=form_carrito, total=total)
+                               form_carrito=form_carrito, total=total, compra = compra_disponible)
     else:
         form = EnSupermercadoForm()
 
