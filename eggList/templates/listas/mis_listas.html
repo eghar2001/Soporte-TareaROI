@@ -1,7 +1,8 @@
 {% extends 'layout.html' %}
 {% block content %}
+        <h1 class="mb-4">Mis listas</h1>
         {% if listas_por_semana %}
-            <h1 class="mb-4">Mis listas</h1>
+
             {% for semana,listas in listas_por_semana %}
                 <div class="margin-bottom mb-2">
                     <div class="d-flex flex-row justify-content-between align-items-center">
