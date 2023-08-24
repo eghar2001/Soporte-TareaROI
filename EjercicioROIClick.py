@@ -1,3 +1,9 @@
+"""
+Tarea dada el 03/08
+Se tiene que seleccioanr una parte de la camara con el mouse, y se muestra
+un roi en video de esa parte seleccionada
+
+"""
 import cv2
 def select_roi(event, x, y, flags, param):
     global roi_selected, start_x, start_y, end_x, end_y
